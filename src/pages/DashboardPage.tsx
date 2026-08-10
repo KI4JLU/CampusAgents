@@ -72,8 +72,18 @@ export function DashboardPage() {
 
   return (
     <DashboardLayout
-      title="Dashboard Übersicht"
-      description={`${filteredWidgets.length} Konnektor${filteredWidgets.length === 1 ? "" : "en"}`}
+      title="Konnektoren"
+      description={
+        <>
+          Konnektoren sind die <b className="text-on-surface">Front eines Agenten</b>: Chat, Formular oder
+          API-Endpunkt.
+        </>
+      }
+      actions={
+        <span className="text-body-base text-on-surface-variant">
+          {filteredWidgets.length} Konnektor{filteredWidgets.length === 1 ? "" : "en"}
+        </span>
+      }
       toolbar={
         <ListToolbar
           search={
@@ -123,7 +133,7 @@ export function DashboardPage() {
             agentName={widget.agentId ? agentNames[widget.agentId] : undefined}
           />
         ))}
-        <AddTile to="/widgets/new" label="Konnektor hinzufügen" hint="Neue Front für einen Agenten" />
+        <AddTile to="/widgets/new" label="Konnektor hinzufügen" hint="Deployment of an Agent" />
       </Grid>
     </DashboardLayout>
   );

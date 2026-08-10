@@ -88,9 +88,14 @@ export function AgentsPage() {
       title="Agenten"
       description={
         <>
-          Agenten sind die wiederverwendbare <b className="text-on-surface">Denkschicht</b> (Ebene 1): Modell,
-          System-Prompt und Regeln. Ein Agent wird einmal definiert und von beliebig vielen Konnektoren verwendet.
+          Agenten sind die wiederverwendbare <b className="text-on-surface">Denkschicht</b>: Modell, System-Prompt
+          und Regeln.
         </>
+      }
+      actions={
+        <span className="text-body-base text-on-surface-variant">
+          {filteredAgents.length} Agent{filteredAgents.length === 1 ? "" : "en"}
+        </span>
       }
       toolbar={
         <ListToolbar
@@ -138,7 +143,7 @@ export function AgentsPage() {
           const used = usage[agent.id] ?? 0;
           const activeRules = activeRuleCount(agent);
           return (
-            <Card key={agent.id} className="p-4 hover:shadow-card-hover hover:-translate-y-1 transition-all flex flex-col">
+            <Card key={agent.id} interactive className="@container p-4 flex flex-col">
               <div className="flex justify-between items-start mb-3">
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                   <Brain className="text-primary" width="1em" height="1em" aria-hidden />
@@ -163,28 +168,30 @@ export function AgentsPage() {
 
               <div className="border-t border-outline-variant/30 my-3" />
 
-              <div className="grid grid-cols-2 gap-2 mb-4">
+              {/* Container-Query statt Viewport-Breakpoint: die Kartenbreite
+                  hängt an der Spaltenzahl des Rasters, nicht am Viewport. */}
+              <div className="grid grid-cols-1 gap-2 mb-4 @[14rem]:grid-cols-2">
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs text-on-surface-variant truncate">Regeln</span>
                   <span className="font-semibold text-sm truncate">{activeRules} aktiv</span>
                 </div>
-                <div className="flex flex-col min-w-0 border-l border-outline-variant/30 pl-2">
+                <div className="flex flex-col min-w-0 @[14rem]:border-l @[14rem]:border-outline-variant/30 @[14rem]:pl-2">
                   <span className="text-xs text-on-surface-variant truncate">Max. Tokens</span>
                   <span className="font-semibold text-sm truncate">{agent.maxTokens}</span>
                 </div>
               </div>
 
-              <Button asChild variant="outline" size="sm" className="mt-auto w-full">
+              <Button asChild variant="outline" size="sm" className="mt-auto w-full min-w-0">
                 <Link to={`/agents/${agent.id}`}>
                   <Pencil className="text-[16px]" width="1em" height="1em" aria-hidden />
-                  Bearbeiten
+                  <span className="truncate">Bearbeiten</span>
                 </Link>
               </Button>
             </Card>
           );
         })}
 
-        <AddTile to="/agents/new" label="Agent hinzufügen" hint="Neue Denkschicht anlegen" />
+        <AddTile to="/agents/new" label="Agent hinzufügen" hint="Prompt, Model, Tools, Knowledge" />
       </Grid>
     </DashboardLayout>
   );
