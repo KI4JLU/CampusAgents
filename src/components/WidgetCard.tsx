@@ -34,7 +34,7 @@ export function WidgetCard({ widget, agentName }: WidgetCardProps) {
   const rating = widget.stats.rating.toFixed(1).replace(".", ",");
 
   return (
-    <Card className="p-4 hover:shadow-card-hover hover:-translate-y-1 transition-all flex flex-col">
+    <Card interactive className="@container p-4 flex flex-col">
       <div className="flex justify-between items-start mb-3">
         <div className={`w-10 h-10 ${accent.iconBg} rounded-xl flex items-center justify-center`}>
           <WidgetIcon name={widget.icon} className={accent.iconText} />
@@ -54,27 +54,30 @@ export function WidgetCard({ widget, agentName }: WidgetCardProps) {
 
       <div className="border-t border-outline-variant/30 my-3" />
 
-      <div className="grid grid-cols-3 gap-2 mb-4">
+      {/* Im 4er-Raster wird die Karte zu schmal für drei Spalten bzw. zwei
+          Buttons — Container-Query statt Viewport-Breakpoint, weil die
+          Kartenbreite an der Spaltenzahl hängt, nicht am Viewport. */}
+      <div className="grid grid-cols-1 gap-2 mb-4 @[16rem]:grid-cols-3">
         <div className="flex flex-col min-w-0">
           <span className="text-xs text-on-surface-variant truncate">Routing</span>
           <span className="font-semibold text-sm truncate">{widget.routing}</span>
         </div>
-        <div className="flex flex-col min-w-0 border-l border-outline-variant/30 pl-2">
+        <div className="flex flex-col min-w-0 @[16rem]:border-l @[16rem]:border-outline-variant/30 @[16rem]:pl-2">
           <span className="text-xs text-on-surface-variant truncate">Gespräche</span>
           <span className="font-semibold text-sm truncate">{widget.stats.conversations}</span>
         </div>
-        <div className="flex flex-col min-w-0 border-l border-outline-variant/30 pl-2">
+        <div className="flex flex-col min-w-0 @[16rem]:border-l @[16rem]:border-outline-variant/30 @[16rem]:pl-2">
           <span className="text-xs text-on-surface-variant truncate">Bewertung</span>
           <span className="font-semibold text-sm truncate">{rating} / 5</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mt-auto">
+      <div className="grid grid-cols-1 gap-2 mt-auto @[14rem]:grid-cols-2">
         {footerActions.map((action) => (
-          <Button key={action.path} asChild variant="outline" size="sm" className="w-full">
+          <Button key={action.path} asChild variant="outline" size="sm" className="w-full min-w-0">
             <Link to={`/widgets/${widget.id}${action.path}`}>
               <action.icon className="text-sm" width="1em" height="1em" aria-hidden />
-              {action.label}
+              <span className="truncate">{action.label}</span>
             </Link>
           </Button>
         ))}
