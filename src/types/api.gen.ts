@@ -1132,13 +1132,33 @@ export interface operations {
             /** @description The public widget configuration. */
             200: {
                 headers: {
+                    /**
+                     * @description Always `no-cache`. The widget is embedded on third-party pages
+                     *     that may sit behind shared caches (Varnish, CDN, corporate
+                     *     proxy). Without an explicit directive those caches apply
+                     *     *heuristic* freshness (RFC 9111 §4.2.2) and would keep serving
+                     *     a widget config the admin panel has already replaced — with no
+                     *     visible error, because widget.js treats any response it gets as
+                     *     current.
+                     */
+                    "Cache-Control": string;
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["WidgetPublicConfig"];
                 };
             };
-            404: components["responses"]["NotFound"];
+            /** @description No resource with this id. */
+            404: {
+                headers: {
+                    /** @description Always `no-store`, so a 404 is never retained. */
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             500: components["responses"]["InternalError"];
         };
     };

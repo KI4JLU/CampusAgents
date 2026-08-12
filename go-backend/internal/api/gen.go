@@ -2537,29 +2537,45 @@ type GetPublicWidgetConfigResponseObject interface {
 	VisitGetPublicWidgetConfigResponse(w http.ResponseWriter) error
 }
 
-type GetPublicWidgetConfig200JSONResponse WidgetPublicConfig
+type GetPublicWidgetConfig200ResponseHeaders struct {
+	CacheControl string
+}
+
+type GetPublicWidgetConfig200JSONResponse struct {
+	Body    WidgetPublicConfig
+	Headers GetPublicWidgetConfig200ResponseHeaders
+}
 
 func (response GetPublicWidgetConfig200JSONResponse) VisitGetPublicWidgetConfigResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", fmt.Sprint(response.Headers.CacheControl))
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
 }
 
-type GetPublicWidgetConfig404JSONResponse struct{ NotFoundJSONResponse }
+type GetPublicWidgetConfig404ResponseHeaders struct {
+	CacheControl string
+}
+
+type GetPublicWidgetConfig404JSONResponse struct {
+	Body    Error
+	Headers GetPublicWidgetConfig404ResponseHeaders
+}
 
 func (response GetPublicWidgetConfig404JSONResponse) VisitGetPublicWidgetConfigResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", fmt.Sprint(response.Headers.CacheControl))
 	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
