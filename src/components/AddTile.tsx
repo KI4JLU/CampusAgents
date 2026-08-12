@@ -19,7 +19,7 @@ export function AddTile({ to, label, hint }: AddTileProps) {
       <div className="w-12 h-12 rounded-full border-2 border-dashed border-current flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
         <Plus className="text-[28px]" width="1em" height="1em" aria-hidden />
       </div>
-      <span className="font-headline-md text-base font-bold">{label}</span>
+      <span className="font-headline-md text-base font-bold text-center">{label}</span>
       {hint && <p className="text-xs mt-1 opacity-70 text-center">{hint}</p>}
     </Link>
   );

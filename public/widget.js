@@ -20,7 +20,7 @@
     "onSurface": "#181c1e",
     "onSurfaceVariant": "#3d4a42",
     "outline": "#6d7a72",
-    "outlineVariant": "#bccac0",
+    "outlineVariant": "#eef1f3",
     "onPrimary": "#ffffff",
     "success": "#15803d",
     "shadowOverlay": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)"

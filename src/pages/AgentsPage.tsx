@@ -1,17 +1,42 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Badge, Button, Card, DashboardLayout, Grid } from "@ki4jlu/design-system";
-import { Bot, Brain, Link as LinkIcon, Pencil } from "lucide-react";
+import { Badge, Button, Card, DashboardLayout, FilterMenu, Grid, Input, ListToolbar } from "@ki4jlu/design-system";
+import { ArrowUpDown, Bot, Brain, Link as LinkIcon, ListFilter, Pencil, Search } from "lucide-react";
 import { AddTile } from "../components/AddTile";
 import { Alert } from "../components/Alert";
+import { EmptyState } from "../components/EmptyState";
 import { agentUsageByWidgets, fetchAgents } from "../data/agentsStore";
 import { fetchModels } from "../data/models";
 import { fetchWidgets } from "../data/widgetsStore";
 import type { Agent } from "../types/agent";
 
+type ConnectorFilter = "all" | "used" | "unused";
+type SortOption = "name" | "connectors" | "rules";
+
+const FILTER_OPTIONS: { value: ConnectorFilter; label: string }[] = [
+  { value: "all", label: "Alle" },
+  { value: "used", label: "Mit Konnektoren" },
+  { value: "unused", label: "Standalone" },
+];
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "name", label: "Name (A-Z)" },
+  { value: "connectors", label: "Konnektoren" },
+  { value: "rules", label: "Regeln" },
+];
+
+/** Zählt die aktiven, nicht-leeren Regeln eines Agenten (Karten-Stat + Sortierung). */
+function activeRuleCount(agent: Agent): number {
+  return agent.rules.filter((r) => r.enabled && r.text.trim()).length;
+}
+
 export function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [usage, setUsage] = useState<Record<string, number>>({});
+  // `null` = Konnektor-Nutzung noch nicht bekannt (lädt oder fehlgeschlagen).
+  // Ohne diese Unterscheidung zählt jeder Agent als „ungenutzt", und der
+  // Konnektor-Filter liefert stillschweigend falsche Ergebnisse.
+  const [usageState, setUsageState] = useState<"loading" | "ready" | "failed">("loading");
   const [modelNames, setModelNames] = useState<Record<string, string>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -25,8 +50,14 @@ export function AgentsPage() {
 
     // Nutzung je Agent aus den Konnektoren (Widgets) ableiten.
     fetchWidgets()
-      .then((widgets) => setUsage(agentUsageByWidgets(widgets)))
-      .catch(() => setUsage({}));
+      .then((widgets) => {
+        setUsage(agentUsageByWidgets(widgets));
+        setUsageState("ready");
+      })
+      .catch(() => {
+        setUsage({});
+        setUsageState("failed");
+      });
 
     // Modell-IDs auf Klarnamen auflösen (Fehlschlag unkritisch → dann greift die ID).
     fetchModels()
@@ -38,26 +69,101 @@ export function AgentsPage() {
       .catch(() => setModelNames({}));
   }, []);
 
-  const sorted = [...agents].sort((a, b) => a.name.localeCompare(b.name));
+  const [search, setSearch] = useState("");
+  const [connectorFilter, setConnectorFilter] = useState<ConnectorFilter>("all");
+  const [sortOption, setSortOption] = useState<SortOption>("name");
+
+  const filteredAgents = agents
+    .filter((agent) => {
+      const used = usage[agent.id] ?? 0;
+      // Nur filtern, wenn die Nutzung wirklich bekannt ist — sonst würde der
+      // Filter auf unvollständigen Daten arbeiten.
+      if (usageState === "ready") {
+        if (connectorFilter === "used" && used === 0) return false;
+        if (connectorFilter === "unused" && used > 0) return false;
+      }
+      const query = search.trim().toLowerCase();
+      if (!query) return true;
+      return agent.name.toLowerCase().includes(query);
+    })
+    .sort((a, b) => {
+      switch (sortOption) {
+        case "connectors":
+          return (usage[b.id] ?? 0) - (usage[a.id] ?? 0);
+        case "rules":
+          return activeRuleCount(b) - activeRuleCount(a);
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
 
   return (
     <DashboardLayout
-      title="Agenten"
+      title="Ihre Agenten"
       description={
         <>
-          Agenten sind die wiederverwendbare <b className="text-on-surface">Denkschicht</b> (Ebene 1): Modell,
-          System-Prompt und Regeln. Ein Agent wird einmal definiert und von beliebig vielen Konnektoren verwendet.
+          Agenten sind die wiederverwendbare <b className="text-on-surface">Denkschicht</b>: Modell, System-Prompt
+          und Regeln.
         </>
+      }
+      actions={
+        <span className="text-body-base text-on-surface-variant">
+          {filteredAgents.length} Agent{filteredAgents.length === 1 ? "" : "en"}
+        </span>
+      }
+      toolbar={
+        <ListToolbar
+          search={
+            <Input
+              leadingIcon={<Search aria-hidden />}
+              placeholder="Agenten durchsuchen..."
+              aria-label="Agenten durchsuchen"
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          }
+          filters={
+            <>
+              <FilterMenu
+                icon={ListFilter}
+                label="Filter"
+                options={FILTER_OPTIONS}
+                value={connectorFilter}
+                defaultValue="all"
+                onChange={(value) => setConnectorFilter(value as ConnectorFilter)}
+              />
+              <FilterMenu
+                icon={ArrowUpDown}
+                label="Sortieren"
+                options={SORT_OPTIONS}
+                value={sortOption}
+                defaultValue="name"
+                onChange={(value) => setSortOption(value as SortOption)}
+              />
+            </>
+          }
+        />
       }
     >
       {loadError && <Alert>Agenten konnten nicht geladen werden: {loadError}</Alert>}
 
+      {usageState === "failed" && (
+        <Alert>
+          Konnektoren konnten nicht geladen werden — „Mit Konnektoren"/„Standalone" filtert deshalb nicht.
+        </Alert>
+      )}
+
+      {!loadError && agents.length > 0 && filteredAgents.length === 0 && (
+        <EmptyState title="Keine Agenten gefunden" hint="Suchbegriff oder Filter anpassen." />
+      )}
+
       <Grid cols={4}>
-        {sorted.map((agent) => {
+        {filteredAgents.map((agent) => {
           const used = usage[agent.id] ?? 0;
-          const activeRules = agent.rules.filter((r) => r.enabled && r.text.trim()).length;
+          const activeRules = activeRuleCount(agent);
           return (
-            <Card key={agent.id} className="p-4 hover:shadow-card-hover hover:-translate-y-1 transition-all flex flex-col">
+            <Card key={agent.id} interactive className="@container p-4 flex flex-col">
               <div className="flex justify-between items-start mb-3">
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                   <Brain className="text-primary" width="1em" height="1em" aria-hidden />
@@ -82,28 +188,30 @@ export function AgentsPage() {
 
               <div className="border-t border-outline-variant/30 my-3" />
 
-              <div className="grid grid-cols-2 gap-2 mb-4">
+              {/* Container-Query statt Viewport-Breakpoint: die Kartenbreite
+                  hängt an der Spaltenzahl des Rasters, nicht am Viewport. */}
+              <div className="grid grid-cols-1 gap-2 mb-4 @[14rem]:grid-cols-2">
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs text-on-surface-variant truncate">Regeln</span>
                   <span className="font-semibold text-sm truncate">{activeRules} aktiv</span>
                 </div>
-                <div className="flex flex-col min-w-0 border-l border-outline-variant/30 pl-2">
+                <div className="flex flex-col min-w-0 @[14rem]:border-l @[14rem]:border-outline-variant/30 @[14rem]:pl-2">
                   <span className="text-xs text-on-surface-variant truncate">Max. Tokens</span>
                   <span className="font-semibold text-sm truncate">{agent.maxTokens}</span>
                 </div>
               </div>
 
-              <Button asChild variant="outline" size="sm" className="mt-auto w-full">
+              <Button asChild variant="outline" size="sm" className="mt-auto w-full min-w-0">
                 <Link to={`/agents/${agent.id}`}>
                   <Pencil className="text-[16px]" width="1em" height="1em" aria-hidden />
-                  Bearbeiten
+                  <span className="truncate">Bearbeiten</span>
                 </Link>
               </Button>
             </Card>
           );
         })}
 
-        <AddTile to="/agents/new" label="Agent hinzufügen" hint="Neue Denkschicht anlegen" />
+        <AddTile to="/agents/new" label="Agent hinzufügen" hint="Prompt, Model, Tools, Knowledge" />
       </Grid>
     </DashboardLayout>
   );
