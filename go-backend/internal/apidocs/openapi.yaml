@@ -535,12 +535,45 @@ paths:
       responses:
         "200":
           description: The public widget configuration.
+          headers:
+            Cache-Control:
+              description: |
+                Always `no-cache`. The widget is embedded on third-party pages
+                that may sit behind shared caches (Varnish, CDN, corporate
+                proxy). Without an explicit directive those caches apply
+                *heuristic* freshness (RFC 9111 §4.2.2) and would keep serving
+                a widget config the admin panel has already replaced — with no
+                visible error, because widget.js treats any response it gets as
+                current.
+              schema:
+                type: string
+                example: no-cache
+              required: true
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WidgetPublicConfig"
         "404":
-          $ref: "#/components/responses/NotFound"
+          # Deliberately NOT $ref components/responses/NotFound: this operation's
+          # 404 needs its own Cache-Control. 404 is heuristically cacheable by
+          # default (RFC 9111 §15), so a shared cache that sees a 404 — widget id
+          # typo, widget not created yet, widget briefly deleted — can keep
+          # serving it after the widget exists. widget.js only checks `res.ok`
+          # and silently falls back to its generic built-in defaults, so the
+          # embedding page would show a placeholder widget with no error anywhere.
+          # 500 needs no such header: it is not heuristically cacheable.
+          description: No resource with this id.
+          headers:
+            Cache-Control:
+              description: Always `no-store`, so a 404 is never retained.
+              schema:
+                type: string
+                example: no-store
+              required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "500":
           $ref: "#/components/responses/InternalError"
     put:

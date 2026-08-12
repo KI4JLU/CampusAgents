@@ -237,8 +237,13 @@ func (h *Handler) GetPublicWidgetConfig(ctx context.Context, request api.GetPubl
 		return nil, err
 	}
 	if raw == nil {
+		// no-store on the 404: it is heuristically cacheable by default, so a
+		// shared cache could otherwise pin "widget does not exist" past the point
+		// where it does — and widget.js reacts to that by silently rendering its
+		// generic built-in defaults.
 		return api.GetPublicWidgetConfig404JSONResponse{
-			NotFoundJSONResponse: api.NotFoundJSONResponse{Error: "Widget nicht gefunden."},
+			Body:    api.Error{Error: "Widget nicht gefunden."},
+			Headers: api.GetPublicWidgetConfig404ResponseHeaders{CacheControl: "no-store"},
 		}, nil
 	}
 
@@ -250,7 +255,15 @@ func (h *Handler) GetPublicWidgetConfig(ctx context.Context, request api.GetPubl
 	if err != nil {
 		return nil, err
 	}
-	return api.GetPublicWidgetConfig200JSONResponse(toPublic(wgt, brain)), nil
+	// no-cache (not no-store): shared caches may keep a copy but must
+	// revalidate every time, so publishing a change in the admin panel takes
+	// effect on the next page load. Without the header those caches fall back
+	// to heuristic freshness and pin embedded widgets to a stale config —
+	// silently, since widget.js only detects a *failed* fetch, not an old one.
+	return api.GetPublicWidgetConfig200JSONResponse{
+		Body:    toPublic(wgt, brain),
+		Headers: api.GetPublicWidgetConfig200ResponseHeaders{CacheControl: "no-cache"},
+	}, nil
 }
 
 // validate enforces the invariants the verbatim upsert needs beyond what the
