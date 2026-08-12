@@ -33,6 +33,10 @@ function activeRuleCount(agent: Agent): number {
 export function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [usage, setUsage] = useState<Record<string, number>>({});
+  // `null` = Konnektor-Nutzung noch nicht bekannt (lädt oder fehlgeschlagen).
+  // Ohne diese Unterscheidung zählt jeder Agent als „ungenutzt", und der
+  // Konnektor-Filter liefert stillschweigend falsche Ergebnisse.
+  const [usageState, setUsageState] = useState<"loading" | "ready" | "failed">("loading");
   const [modelNames, setModelNames] = useState<Record<string, string>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -46,8 +50,14 @@ export function AgentsPage() {
 
     // Nutzung je Agent aus den Konnektoren (Widgets) ableiten.
     fetchWidgets()
-      .then((widgets) => setUsage(agentUsageByWidgets(widgets)))
-      .catch(() => setUsage({}));
+      .then((widgets) => {
+        setUsage(agentUsageByWidgets(widgets));
+        setUsageState("ready");
+      })
+      .catch(() => {
+        setUsage({});
+        setUsageState("failed");
+      });
 
     // Modell-IDs auf Klarnamen auflösen (Fehlschlag unkritisch → dann greift die ID).
     fetchModels()
@@ -66,8 +76,12 @@ export function AgentsPage() {
   const filteredAgents = agents
     .filter((agent) => {
       const used = usage[agent.id] ?? 0;
-      if (connectorFilter === "used" && used === 0) return false;
-      if (connectorFilter === "unused" && used > 0) return false;
+      // Nur filtern, wenn die Nutzung wirklich bekannt ist — sonst würde der
+      // Filter auf unvollständigen Daten arbeiten.
+      if (usageState === "ready") {
+        if (connectorFilter === "used" && used === 0) return false;
+        if (connectorFilter === "unused" && used > 0) return false;
+      }
       const query = search.trim().toLowerCase();
       if (!query) return true;
       return agent.name.toLowerCase().includes(query);
@@ -85,7 +99,7 @@ export function AgentsPage() {
 
   return (
     <DashboardLayout
-      title="Agenten"
+      title="Ihre Agenten"
       description={
         <>
           Agenten sind die wiederverwendbare <b className="text-on-surface">Denkschicht</b>: Modell, System-Prompt
@@ -133,6 +147,12 @@ export function AgentsPage() {
       }
     >
       {loadError && <Alert>Agenten konnten nicht geladen werden: {loadError}</Alert>}
+
+      {usageState === "failed" && (
+        <Alert>
+          Konnektoren konnten nicht geladen werden — „Mit Konnektoren"/„Standalone" filtert deshalb nicht.
+        </Alert>
+      )}
 
       {!loadError && agents.length > 0 && filteredAgents.length === 0 && (
         <EmptyState title="Keine Agenten gefunden" hint="Suchbegriff oder Filter anpassen." />

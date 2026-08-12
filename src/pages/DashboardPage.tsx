@@ -72,7 +72,7 @@ export function DashboardPage() {
 
   return (
     <DashboardLayout
-      title="Konnektoren"
+      title="Ihre Konnektoren"
       description={
         <>
           Konnektoren sind die <b className="text-on-surface">Front eines Agenten</b>: Chat, Formular oder
