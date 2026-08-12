@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Badge, Button, Card } from "@ki4jlu/design-system";
-import { Brain, Code, Settings, type LucideIcon } from "lucide-react";
+import { Brain, Code, MessageCircle, Settings, type LucideIcon } from "lucide-react";
 import { WidgetIcon } from "./WidgetIcon";
 import type { Widget } from "../types/widget";
 
@@ -14,11 +14,13 @@ const statusBadge: Record<Widget["status"], { tone: "primary" | "neutral"; label
   paused: { tone: "neutral", label: "Pause" },
 };
 
-// Footer-Buttons (`path` wird an `/widgets/${id}` angehängt). Die Chatbox ist
-// bewusst keine Karten-Aktion mehr — Gespräche sind über die Sidebar-Subnavigation
-// erreichbar, und drei Buttons passen nicht ohne Verkleinerungs-Hacks in die Karte.
+// Footer-Buttons (`path` wird an `/widgets/${id}` angehängt). „Gespräche" ist
+// der EINZIGE Einstieg in /widgets/:id/gespraeche, seit die Sidebar-Subnavigation
+// entfallen ist — nicht entfernen, ohne einen anderen Einstieg zu schaffen.
+// Drei Buttons passen inzwischen: auf schmalen Karten stapeln sie (Container-Query).
 const footerActions: { path: string; icon: LucideIcon; label: string }[] = [
   { path: "", icon: Settings, label: "Einstellungen" },
+  { path: "/gespraeche", icon: MessageCircle, label: "Gespräche" },
   { path: "/einbetten", icon: Code, label: "Einbetten" },
 ];
 
@@ -72,7 +74,7 @@ export function WidgetCard({ widget, agentName }: WidgetCardProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 mt-auto @[14rem]:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 mt-auto @[20rem]:grid-cols-3">
         {footerActions.map((action) => (
           <Button key={action.path} asChild variant="outline" size="sm" className="w-full min-w-0">
             <Link to={`/widgets/${widget.id}${action.path}`}>
