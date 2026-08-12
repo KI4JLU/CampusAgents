@@ -20,7 +20,7 @@
     "lint:api-spec": "npx --yes @redocly/cli@2 lint go-backend/internal/apidocs/openapi.yaml"
   },
   "dependencies": {
-    "@ki4jlu/design-system": "^0.20.0",
+    "@ki4jlu/design-system": "^0.22.0",
     "lucide-react": "^1.21.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
