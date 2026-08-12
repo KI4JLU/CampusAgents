@@ -71,10 +71,15 @@ docker compose up -d             # frontend + backend + Postgres + Redis + porta
 ```
 
 - **No build runs on the server.** Both the **frontend**
-  (`ghcr.io/stenseegel/chatbotadmin-frontend`) and the **backend**
-  (`ghcr.io/stenseegel/chatbotadmin-backend`) are prebuilt images published by
+  (`ghcr.io/ki4jlu/chatbotadmin-frontend`) and the **backend**
+  (`ghcr.io/ki4jlu/chatbotadmin-backend`) are prebuilt images published by
   [`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml)
   on every push to `main`. `pull_policy: always` keeps them fresh.
+  > The owner segment follows `github.repository_owner`, so it is **`ki4jlu`**
+  > since the repo moved to the KI4JLU org. The old `stenseegel/*` images are
+  > stale — pulling those is why a deploy can silently keep serving an old
+  > build. If the packages are private, the server needs a `docker login
+  > ghcr.io` with a token carrying `read:packages` for the org.
 - **TLS** is served by the frontend on 80/443 using the host certs
   (`/etc/ssl/certs/sv90073.pem`, `/etc/ssl/private/priv.pem`) and
   `nginx.staging.conf` — already wired in `docker-compose.yml`. (If `:443` is
@@ -108,8 +113,8 @@ Promote a validated staging image, then deploy with that tag pinned:
 ```bash
 # Promote the tested images (CI or manually) — tag both frontend and backend:
 for img in chatbotadmin-frontend chatbotadmin-backend; do
-  docker tag  ghcr.io/stenseegel/$img:latest ghcr.io/stenseegel/$img:prod
-  docker push ghcr.io/stenseegel/$img:prod
+  docker tag  ghcr.io/ki4jlu/$img:latest ghcr.io/ki4jlu/$img:prod
+  docker push ghcr.io/ki4jlu/$img:prod
 done
 
 # On the prod server — .env pins the prod tags plus prod secrets/origins:
