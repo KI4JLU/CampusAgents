@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
-	"github.com/stenseegel/chatbotadmin-backend/internal/modelproxy"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/httputil"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/modelproxy"
 )
 
 // ChatProxy is the subset of the model proxy the widget chat endpoint needs.

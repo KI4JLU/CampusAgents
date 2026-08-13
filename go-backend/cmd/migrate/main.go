@@ -15,9 +15,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/config"
-	"github.com/stenseegel/chatbotadmin-backend/internal/migrate"
-	mainmigrations "github.com/stenseegel/chatbotadmin-backend/migrations/main"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/config"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/migrate"
+	mainmigrations "github.com/KI4JLU/CampusAgents/go-backend/migrations/main"
 )
 
 func main() {

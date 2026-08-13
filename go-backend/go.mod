@@ -1,4 +1,4 @@
-module github.com/stenseegel/chatbotadmin-backend
+module github.com/KI4JLU/CampusAgents/go-backend
 
 go 1.26
 

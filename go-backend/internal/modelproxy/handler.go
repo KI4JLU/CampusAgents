@@ -14,8 +14,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/api"
-	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/api"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/httputil"
 )
 
 // Handler proxies model + chat requests to the upstream OpenAI-compatible API.

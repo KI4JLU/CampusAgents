@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/logctx"
 )
 
 // errorResponse is the wire shape for every JSON error body: {"error": msg}.

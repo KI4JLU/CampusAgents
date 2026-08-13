@@ -11,9 +11,9 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/auth"
-	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
-	"github.com/stenseegel/chatbotadmin-backend/internal/safego"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/auth"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/logctx"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/safego"
 )
 
 const (

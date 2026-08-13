@@ -6,7 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/pgxutil"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/pgxutil"
 )
 
 // PGStore is a PostgreSQL-backed implementation of apikeyauth.Store.

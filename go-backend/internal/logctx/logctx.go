@@ -19,7 +19,7 @@ import (
 	"log/slog"
 	"sync/atomic"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/requestid"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/requestid"
 	"go.opentelemetry.io/otel/trace"
 )
 

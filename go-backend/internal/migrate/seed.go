@@ -9,8 +9,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/authhandler"
-	"github.com/stenseegel/chatbotadmin-backend/internal/config"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/authhandler"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/config"
 )
 
 // bcryptCost 12 (~250ms) defends the hand-picked admin password against
