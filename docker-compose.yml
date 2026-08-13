@@ -5,7 +5,7 @@
 # real secrets (start from .env.staging.example). For pure local development use
 # `npm run dev` (Vite on :5173 + the go-backend/ compose) instead.
 x-backend-env: &backend-env
-  DATABASE_URL: postgres://chatbotadmin:${POSTGRES_PASSWORD:-chatbotadmin}@postgres:5432/chatbotadmin?sslmode=disable
+  DATABASE_URL: postgres://campusagents:${POSTGRES_PASSWORD:-campusagents}@postgres:5432/campusagents?sslmode=disable
   REDIS_HOST: redis
   GO_ENV: ${GO_ENV:-development}
   JWT_SECRET: ${JWT_SECRET:-local-dev-secret-at-least-32-chars-long-xx}
@@ -33,11 +33,11 @@ x-backend-env: &backend-env
 
 services:
   # Remote/Production Deployment (Pulls pre-built image from GitHub Container Registry)
-  chatbotadmin-frontend:
+  campusagents-frontend:
     # Staging runs the latest built image; Prod pins the prod-ready tag via
     # FRONTEND_IMAGE_TAG in .env (e.g. FRONTEND_IMAGE_TAG=prod).
-    image: ghcr.io/ki4jlu/chatbotadmin-frontend:${FRONTEND_IMAGE_TAG:-latest}
-    container_name: chatbotadmin-frontend
+    image: ghcr.io/ki4jlu/campusagents-frontend:${FRONTEND_IMAGE_TAG:-latest}
+    container_name: campusagents-frontend
     ports:
       - "443:443"             # admin SPA + /api proxy (HTTPS)
       - "80:80"               # HTTP → HTTPS redirect
@@ -83,13 +83,13 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: chatbotadmin
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatbotadmin}
-      POSTGRES_DB: chatbotadmin
+      POSTGRES_USER: campusagents
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campusagents}
+      POSTGRES_DB: campusagents
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chatbotadmin -d chatbotadmin"]
+      test: ["CMD-SHELL", "pg_isready -U campusagents -d campusagents"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -108,7 +108,7 @@ services:
   # One-shot: apply migrations + seed the admin (and OIDC provider, if set), then exit.
   # Reuses the backend image (same binary set); just overrides the entrypoint.
   migrate:
-    image: ghcr.io/ki4jlu/chatbotadmin-backend:${BACKEND_IMAGE_TAG:-latest}
+    image: ghcr.io/ki4jlu/campusagents-backend:${BACKEND_IMAGE_TAG:-latest}
     pull_policy: always
     entrypoint: ["/app/migrate"]
     environment: *backend-env
@@ -120,9 +120,9 @@ services:
     # Prebuilt image from GHCR (published by .github/workflows/docker-publish.yml);
     # staging/prod pull it rather than compiling Go on the server. Prod pins
     # BACKEND_IMAGE_TAG=prod in .env (mirrors FRONTEND_IMAGE_TAG).
-    image: ghcr.io/ki4jlu/chatbotadmin-backend:${BACKEND_IMAGE_TAG:-latest}
+    image: ghcr.io/ki4jlu/campusagents-backend:${BACKEND_IMAGE_TAG:-latest}
     pull_policy: always
-    container_name: chatbotadmin-backend
+    container_name: campusagents-backend
     environment: *backend-env
     expose:
       - "8080"                # internal only; the frontend nginx proxies to it

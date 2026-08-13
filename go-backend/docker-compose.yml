@@ -13,7 +13,7 @@
 # value is overridable via .env or the shell environment. NEVER rely on these
 # defaults in production — set GO_ENV=production with real secrets there.
 x-backend-env: &backend-env
-  DATABASE_URL: postgres://chatbotadmin:${POSTGRES_PASSWORD:-chatbotadmin}@postgres:5432/chatbotadmin?sslmode=disable
+  DATABASE_URL: postgres://campusagents:${POSTGRES_PASSWORD:-campusagents}@postgres:5432/campusagents?sslmode=disable
   REDIS_HOST: redis
   GO_ENV: ${GO_ENV:-development}
   JWT_SECRET: ${JWT_SECRET:-local-dev-secret-at-least-32-chars-long-xx}
@@ -29,15 +29,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: chatbotadmin
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatbotadmin}
-      POSTGRES_DB: chatbotadmin
+      POSTGRES_USER: campusagents
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campusagents}
+      POSTGRES_DB: campusagents
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chatbotadmin -d chatbotadmin"]
+      test: ["CMD-SHELL", "pg_isready -U campusagents -d campusagents"]
       interval: 5s
       timeout: 5s
       retries: 10

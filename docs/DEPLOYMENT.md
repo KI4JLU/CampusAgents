@@ -71,15 +71,33 @@ docker compose up -d             # frontend + backend + Postgres + Redis + porta
 ```
 
 - **No build runs on the server.** Both the **frontend**
-  (`ghcr.io/ki4jlu/chatbotadmin-frontend`) and the **backend**
-  (`ghcr.io/ki4jlu/chatbotadmin-backend`) are prebuilt images published by
+  (`ghcr.io/ki4jlu/campusagents-frontend`) and the **backend**
+  (`ghcr.io/ki4jlu/campusagents-backend`) are prebuilt images published by
   [`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml)
   on every push to `main`. `pull_policy: always` keeps them fresh.
   > The owner segment follows `github.repository_owner`, so it is **`ki4jlu`**
   > since the repo moved to the KI4JLU org. The old `stenseegel/*` images are
   > stale — pulling those is why a deploy can silently keep serving an old
-  > build. If the packages are private, the server needs a `docker login
-  > ghcr.io` with a token carrying `read:packages` for the org.
+  > build. New packages are **private by default**: after the first push under a
+  > new image name, set each package to public (Org → Packages → Package
+  > settings), or give the server a `docker login ghcr.io` with a token
+  > carrying `read:packages`.
+
+> **Umbenennung `chatbotadmin-*` → `campusagents-*`.** Betrifft auch
+> `POSTGRES_USER`/`POSTGRES_DB`. Postgres legt Rolle und Datenbank **nur beim
+> ersten Start auf einem leeren Volume** an — auf einem bestehenden Volume
+> ändert die Umbenennung nichts, und der Backend-Start scheitert dann an einer
+> Rolle, die es dort nicht gibt. Beim Update deshalb das Volume verwerfen:
+>
+> ```bash
+> docker compose down -v      # löscht pgdata dieses Projekts
+> docker compose pull
+> docker compose up -d        # legt Rolle/DB neu an, migrate seedet
+> ```
+>
+> Das ist **Datenverlust** — auf Staging bewusst in Kauf genommen (Testdaten).
+> Auf einer Instanz mit echten Daten stattdessen Rolle und DB in Postgres
+> umbenennen, statt das Volume zu löschen.
 - **TLS** is served by the frontend on 80/443 using the host certs
   (`/etc/ssl/certs/sv90073.pem`, `/etc/ssl/private/priv.pem`) and
   `nginx.staging.conf` — already wired in `docker-compose.yml`. (If `:443` is
@@ -112,7 +130,7 @@ Promote a validated staging image, then deploy with that tag pinned:
 
 ```bash
 # Promote the tested images (CI or manually) — tag both frontend and backend:
-for img in chatbotadmin-frontend chatbotadmin-backend; do
+for img in campusagents-frontend campusagents-backend; do
   docker tag  ghcr.io/ki4jlu/$img:latest ghcr.io/ki4jlu/$img:prod
   docker push ghcr.io/ki4jlu/$img:prod
 done
