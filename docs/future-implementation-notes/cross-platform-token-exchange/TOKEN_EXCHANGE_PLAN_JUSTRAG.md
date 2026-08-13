@@ -1,8 +1,8 @@
 # Implementation Plan — JustRAG side (Option A: OAuth 2.0 Token Exchange, RFC 8693)
 
-**Goal:** Allow the chatbotadmin service to call JustRAG's API *on behalf of a user*, scoped to that user's data, by presenting a Keycloak access token (obtained via RFC 8693 token exchange) that is audienced to JustRAG.
+**Goal:** Allow the CampusAgents service to call JustRAG's API *on behalf of a user*, scoped to that user's data, by presenting a Keycloak access token (obtained via RFC 8693 token exchange) that is audienced to JustRAG.
 
-**Context:** chatbotadmin and JustRAG federate the **same Keycloak realm** (`login.uni-giessen.de/realms/jlu`) and both already store the Keycloak `sub` in `users.external_id`. That shared key is what makes per-user scoping correct. See `chatbotadmin-frontend/docs/TOKEN_EXCHANGE_PLAN_CHATBOTADMIN.md` for the matching client-side work.
+**Context:** CampusAgents and JustRAG federate the **same Keycloak realm** (`login.uni-giessen.de/realms/jlu`) and both already store the Keycloak `sub` in `users.external_id`. That shared key is what makes per-user scoping correct. See [`TOKEN_EXCHANGE_PLAN_CAMPUSAGENTS.md`](TOKEN_EXCHANGE_PLAN_CAMPUSAGENTS.md) for the matching client-side work.
 
 ---
 
@@ -22,10 +22,10 @@ A Keycloak access token is **RS256**, carries `iss`/`aud`/`azp`, and would fail 
 
 ### Path A2 — bootstrap exchange endpoint *(recommended)*
 
-Add **one** new endpoint that trades a verified Keycloak access token for a normal JustRAG JWT. chatbotadmin caches that JWT and uses JustRAG's **existing, unchanged** data endpoints.
+Add **one** new endpoint that trades a verified Keycloak access token for a normal JustRAG JWT. CampusAgents caches that JWT and uses JustRAG's **existing, unchanged** data endpoints.
 
 - **Pro:** minimal change. The hot path (`auth.Middleware`) and every data handler stay exactly as they are. You reuse the existing JWT minting (`signToken` in [`internal/authhandler/handler.go`](../go-backend/internal/authhandler/handler.go)) and the existing blacklist/revocation machinery.
-- **Con:** a second short-lived token (the JustRAG JWT) exists alongside the Keycloak token; chatbotadmin re-bootstraps when it expires.
+- **Con:** a second short-lived token (the JustRAG JWT) exists alongside the Keycloak token; CampusAgents re-bootstraps when it expires.
 
 ### Path A1 — validate Keycloak tokens directly in middleware
 
@@ -38,9 +38,9 @@ Teach `auth.Middleware` to accept Keycloak RS256 access tokens on every endpoint
 
 ---
 
-## Phase 0 — Keycloak realm prerequisites (shared with chatbotadmin team)
+## Phase 0 — Keycloak realm prerequisites (shared with CampusAgents team)
 
-Joint realm-admin tasks (also listed in the chatbotadmin plan — do once):
+Joint realm-admin tasks (also listed in the CampusAgents plan — do once):
 
 1. Confirm/define the **`justrag` Keycloak client** and note its client id — this is the **audience** JustRAG will require.
 2. Enable **token exchange** for the `chatwidgets` client with a policy permitting exchange **to the `justrag` audience**.
@@ -92,7 +92,7 @@ If JustRAG's existing single OIDC provider already points at the same realm, reu
 **Hardening:**
 - Rate-limit this endpoint per `sub`.
 - Log `auth.exchange_validated` / `auth.exchange_rejected` with `sub` (not the token) for audit.
-- Consider restricting `azp` to the known `chatwidgets` client id as defense-in-depth (only chatbotadmin should be bootstrapping sessions this way).
+- Consider restricting `azp` to the known `chatwidgets` client id as defense-in-depth (only CampusAgents should be bootstrapping sessions this way).
 
 ---
 
@@ -110,13 +110,13 @@ No data-layer changes needed for A2 — once the exchange mints a standard JustR
 ## Phase 4 — Testing & rollout
 
 1. **Unit:** JWKS verifier (valid/expired/wrong-issuer/wrong-audience/unknown-kid → correct accept/reject); `sub`→user mapping incl. the strict no-account rejection.
-2. **Integration (staging realm):** real exchanged Keycloak token from chatbotadmin → `/api/auth/oidc/exchange` → JustRAG JWT → data call returns the right user's data.
+2. **Integration (staging realm):** real exchanged Keycloak token from CampusAgents → `/api/auth/oidc/exchange` → JustRAG JWT → data call returns the right user's data.
 3. **Security tests (must pass before rollout):**
    - Token audienced to a *different* client → `401` (confused-deputy guard).
    - Expired / tampered token → `401`.
    - Valid token for a user with no JustRAG account → `403` (strict mode).
    - User isolation: A's token never returns B's resources.
-4. **Rollout:** feature-flag the endpoint (`OIDC_EXCHANGE_ENABLED`). Deploy disabled, enable in staging, validate with chatbotadmin, then production. The endpoint is purely additive — existing auth paths are untouched, so rollback is just disabling the flag.
+4. **Rollout:** feature-flag the endpoint (`OIDC_EXCHANGE_ENABLED`). Deploy disabled, enable in staging, validate with CampusAgents, then production. The endpoint is purely additive — existing auth paths are untouched, so rollback is just disabling the flag.
 
 ---
 
@@ -125,7 +125,7 @@ No data-layer changes needed for A2 — once the exchange mints a standard JustR
 - Modify [`internal/auth/middleware.go`](../go-backend/internal/auth/middleware.go) `Authenticate` to branch on token type: try the Phase-1 Keycloak verifier first (RS256 / has `kid` / `iss` matches), else fall back to the existing HS256 `ParseToken`. The API-key middleware (`jrag_` prefix) is unaffected.
 - On a Keycloak token, build `auth.Claims` by mapping `sub`→user (same `resolveOIDCUser` logic) **on every request** — so add a short per-`sub` user-lookup cache to avoid a DB hit per call.
 - Blacklist/`jti` semantics differ (Keycloak controls revocation); decide whether the existing blacklist applies to externally-issued tokens or is bypassed for them.
-- No exchange endpoint and no second token; chatbotadmin sends the exchanged Keycloak token directly to data endpoints.
+- No exchange endpoint and no second token; CampusAgents sends the exchanged Keycloak token directly to data endpoints.
 - Higher risk: every request now flows through new verification code. Prefer A2 unless you specifically want Keycloak to own token lifetime end to end.
 
 ---

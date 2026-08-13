@@ -1,4 +1,4 @@
-// Command server runs the chatbotadmin authentication + model-proxy backend.
+// Command server runs the CampusAgents authentication + model-proxy backend.
 package main
 
 import (

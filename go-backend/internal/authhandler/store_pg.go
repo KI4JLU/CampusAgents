@@ -210,7 +210,7 @@ func toAuthProviderRow(r authProviderDBRow) adminproviders.AuthProviderRow {
 const authProviderSelectCols = `id, type, name, config, is_active, created_at`
 
 // ApplyPendingInvites is a no-op in this deployment. JustRAG promoted bulk
-// knowledge-base invites here on first OIDC login; chatbotadmin has no such
+// knowledge-base invites here on first OIDC login; CampusAgents has no such
 // tables, so there is nothing to migrate. Kept to satisfy the OIDCStore
 // interface and the best-effort call in the OIDC callback.
 func (s *PGStore) ApplyPendingInvites(_ context.Context, _, _ string) error {

@@ -12,7 +12,7 @@
  *  nginx reverse-proxy in prod). */
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
-const TOKEN_STORAGE_KEY = "chatbotadmin.token";
+const TOKEN_STORAGE_KEY = "campusagents.token";
 
 let authToken: string | null = readStoredToken();
 
