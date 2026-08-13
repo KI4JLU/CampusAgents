@@ -155,10 +155,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: chatbotadmin-frontend
+          # Kleinschreibung ist Pflicht: GHCR lehnt Großbuchstaben im
+          # Image-Namen ab (nur der OWNER wird unten automatisch gelowercased).
+          - name: campusagents-frontend
             context: .
             file: Dockerfile
-          - name: chatbotadmin-backend
+          - name: campusagents-backend
             context: ./go-backend
             file: ./go-backend/Dockerfile
 
