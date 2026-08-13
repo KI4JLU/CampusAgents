@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/modelproxy"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/modelproxy"
 )
 
 // ---------------------------------------------------------------------------

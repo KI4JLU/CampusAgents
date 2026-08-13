@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/api"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/api"
 )
 
 // ---------------------------------------------------------------------------

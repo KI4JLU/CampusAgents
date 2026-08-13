@@ -12,11 +12,11 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/adminproviders"
-	"github.com/stenseegel/chatbotadmin-backend/internal/api"
-	"github.com/stenseegel/chatbotadmin-backend/internal/auth"
-	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
-	"github.com/stenseegel/chatbotadmin-backend/internal/users"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/adminproviders"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/api"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/auth"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/logctx"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/users"
 )
 
 // dummyHash is used in constant-time comparisons when the requested username

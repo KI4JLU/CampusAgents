@@ -8,8 +8,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/api"
-	"github.com/stenseegel/chatbotadmin-backend/internal/auth"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/api"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/auth"
 )
 
 var uuidRegex = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)

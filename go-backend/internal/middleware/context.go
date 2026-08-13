@@ -3,8 +3,8 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
-	"github.com/stenseegel/chatbotadmin-backend/internal/requestid"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/logctx"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/requestid"
 )
 
 // RequestContext assigns/propagates a request ID and attaches a request-scoped

@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/config"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/config"
 )
 
 // openSQL opens a database/sql handle over pgx for goose, which works against

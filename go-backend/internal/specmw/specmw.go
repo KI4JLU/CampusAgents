@@ -26,10 +26,10 @@ import (
 	"github.com/getkin/kin-openapi/routers"
 	nethttpmiddleware "github.com/oapi-codegen/nethttp-middleware"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/apikeyauth"
-	"github.com/stenseegel/chatbotadmin-backend/internal/auth"
-	"github.com/stenseegel/chatbotadmin-backend/internal/httputil"
-	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/apikeyauth"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/auth"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/httputil"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/logctx"
 )
 
 // Security scheme names — must match components.securitySchemes in the spec.

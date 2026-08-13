@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/logctx"
 )
 
 type userKey struct{}

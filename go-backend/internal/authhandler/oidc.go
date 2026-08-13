@@ -18,9 +18,9 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/adminproviders"
-	"github.com/stenseegel/chatbotadmin-backend/internal/auth"
-	"github.com/stenseegel/chatbotadmin-backend/internal/users"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/adminproviders"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/auth"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/users"
 )
 
 // OIDCProviderType is the auth_providers.type value for an OpenID Connect IdP.

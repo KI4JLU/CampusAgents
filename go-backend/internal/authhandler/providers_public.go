@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/api"
-	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/api"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/logctx"
 )
 
 // localAuthEnabled reports whether the username/password form should be offered.

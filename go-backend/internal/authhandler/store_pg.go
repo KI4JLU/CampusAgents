@@ -8,9 +8,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/adminproviders"
-	"github.com/stenseegel/chatbotadmin-backend/internal/pgxutil"
-	"github.com/stenseegel/chatbotadmin-backend/internal/users"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/adminproviders"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/pgxutil"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/users"
 )
 
 // PGStore is a PostgreSQL-backed implementation of authhandler.Store.

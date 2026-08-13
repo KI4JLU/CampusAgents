@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"runtime/debug"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/logctx"
 )
 
 // Go launches fn in a new goroutine with panic recovery. If fn panics the

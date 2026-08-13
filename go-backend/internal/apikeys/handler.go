@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/api"
-	"github.com/stenseegel/chatbotadmin-backend/internal/auth"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/api"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/auth"
 )
 
 const (

@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/app"
-	"github.com/stenseegel/chatbotadmin-backend/internal/config"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/app"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/config"
 )
 
 // version is set at build time via -ldflags "-X main.version=...".

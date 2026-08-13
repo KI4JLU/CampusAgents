@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/api"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/api"
 )
 
 // maxBodyBytes caps the public chat endpoint's body reads (chat.go); admin

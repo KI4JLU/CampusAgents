@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/stenseegel/chatbotadmin-backend/internal/logctx"
+	"github.com/KI4JLU/CampusAgents/go-backend/internal/logctx"
 )
 
 const (
