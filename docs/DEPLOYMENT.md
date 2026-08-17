@@ -61,14 +61,34 @@ password, `KI_API_KEY`, or OIDC, copy `go-backend/.env.example` →
 
 ## 2. Staging
 
-A real server (`sv90073.hrz.uni-giessen.de`) running ready-made images. On the
-server, in the repo checkout:
+A real server (`sv90073.hrz.uni-giessen.de`) running ready-made images. The compose
+project lives in **`/root/widgets`**, so every command below needs root — the
+deploy account (`gz488`) is deliberately *not* in the `docker` group and uses
+passwordless sudo instead:
+
+```bash
+ssh gz488@sv90073.hrz.uni-giessen.de
+sudo sh -c 'cd /root/widgets && docker compose ps'
+```
+
+On the server, in that directory:
 
 ```bash
 cp .env.staging.example .env     # fill in every FILL_IN value (secrets + OIDC)
 docker compose pull              # frontend + backend images from GHCR
 docker compose up -d             # frontend + backend + Postgres + Redis + portal
 ```
+
+**Service names are asymmetric** — check before typing a per-service command, or
+compose fails with "no such service":
+
+| Service (compose) | Container | Image |
+| --- | --- | --- |
+| `campusagents-frontend` | `campusagents-frontend` | `ghcr.io/ki4jlu/campusagents-frontend` |
+| `backend` | `campusagents-backend` | `ghcr.io/ki4jlu/campusagents-backend` |
+| `postgres` / `redis` / `migrate` | `widgets-<name>-1` | official images |
+
+`docker compose config --services` is the authoritative list.
 
 - **No build runs on the server.** Both the **frontend**
   (`ghcr.io/ki4jlu/campusagents-frontend`) and the **backend**
@@ -82,6 +102,30 @@ docker compose up -d             # frontend + backend + Postgres + Redis + porta
   > new image name, set each package to public (Org → Packages → Package
   > settings), or give the server a `docker login ghcr.io` with a token
   > carrying `read:packages`.
+
+**Deploying only the frontend** — the right move for a `widget.js`, SPA or nginx
+change, since `public/widget.js` ships inside the frontend image and nothing else
+is affected:
+
+```bash
+sudo sh -c 'cd /root/widgets && docker compose pull campusagents-frontend'
+sudo sh -c 'cd /root/widgets && docker compose up -d --no-deps campusagents-frontend'
+```
+
+`--no-deps` is the point: without it, compose evaluates `depends_on` and may
+recreate Postgres, Redis and the backend alongside the frontend. Those carry the
+state, so keeping them on their existing uptime turns a widget deploy into a
+genuinely narrow operation — and it sidesteps the Postgres-role hazard below
+entirely. Verify from *outside* the server, since a cached copy on the way in
+would otherwise look like a failed deploy:
+
+```bash
+curl -sk https://sv90073.hrz.uni-giessen.de/widget.js | grep -c scriptBase   # ≥1 = new loader
+curl -sk -o /dev/null -w '%{http_code}\n' https://sv90073.hrz.uni-giessen.de/api/widgets/support-bot
+```
+
+The loader is served `max-age=300, must-revalidate`, so allow up to five minutes
+before concluding a deploy didn't land.
 
 > **Umbenennung `chatbotadmin-*` → `campusagents-*`.** Betrifft auch
 > `POSTGRES_USER`/`POSTGRES_DB`. Postgres legt Rolle und Datenbank **nur beim
