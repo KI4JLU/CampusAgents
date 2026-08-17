@@ -169,6 +169,81 @@ describe("widget.js — Konfiguration & KB-Integration", () => {
   });
 });
 
+describe("widget.js — Auflösung der API-URL", () => {
+  // widget.js darf keinen absoluten Host enthalten: es löst die API relativ zu
+  // seiner EIGENEN <script src> auf (Verzeichnis, nicht nur Origin). Nur so
+  // funktioniert ein Reverse Proxy auf der einbettenden Seite, der einen Prefix
+  // auf dieses Deployment mappt — sonst landen die Requests im Wurzelpfad des
+  // Portals, wo die Anwendung des Portals antwortet und nicht unsere.
+  function withCurrentScript(src: string, run: () => void) {
+    Object.defineProperty(document, "currentScript", {
+      configurable: true,
+      get: () => ({ src }) as unknown as HTMLScriptElement,
+    });
+    try {
+      run();
+    } finally {
+      // @ts-expect-error -- Instanz-Override entfernen, damit der Prototyp-Getter wieder greift.
+      delete document.currentScript;
+    }
+  }
+
+  // Die Konfigurations-URL ist der Aufruf, der NICHT auf "/chat" endet — auf
+  // `includes("/chat")` zu prüfen wäre falsch, weil ein Proxy-Prefix diese
+  // Zeichenfolge selbst enthalten kann (z. B. "/chatbot/").
+  function configUrl(): string | undefined {
+    const calls = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    return calls.map((c) => String(c[0])).find((u) => !u.endsWith("/chat"));
+  }
+
+  it("hängt die API unter denselben Pfad-Prefix, unter dem widget.js ausgeliefert wurde", async () => {
+    mockFetch([]);
+    withCurrentScript("https://www.uni-giessen.de/campusagents/widget.js", runWidget);
+
+    await waitFor(() => expect(configUrl()).toBeTruthy());
+    expect(configUrl()).toBe(`https://www.uni-giessen.de/campusagents/api/widgets/${WID}`);
+  });
+
+  // Der Prefix ist im Loader nicht bekannt: die einbettende Seite wählt ihn und
+  // darf ihn ändern, ohne dass hier etwas angepasst werden muss.
+  it("funktioniert unter einem beliebigen, mehrstufigen Prefix", async () => {
+    mockFetch([]);
+    withCurrentScript("https://portal.example/dienste/assistenten/widget.js", runWidget);
+
+    await waitFor(() => expect(configUrl()).toBeTruthy());
+    expect(configUrl()).toBe(`https://portal.example/dienste/assistenten/api/widgets/${WID}`);
+  });
+
+  it("ruft bei Auslieferung aus dem Wurzelverzeichnis /api auf demselben Host auf", async () => {
+    mockFetch([]);
+    withCurrentScript("https://sv90073.hrz.uni-giessen.de/widget.js", runWidget);
+
+    await waitFor(() => expect(configUrl()).toBeTruthy());
+    expect(configUrl()).toBe(`https://sv90073.hrz.uni-giessen.de/api/widgets/${WID}`);
+  });
+
+  it("data-api überschreibt die relative Auflösung", async () => {
+    document.body.innerHTML =
+      `<div class="chatbot-widget" data-widget-id="${WID}" data-api="https://sv90073.hrz.uni-giessen.de/api"></div>`;
+    mockFetch([]);
+    withCurrentScript("https://www.uni-giessen.de/widget.js", runWidget);
+
+    await waitFor(() => expect(configUrl()).toBeTruthy());
+    expect(configUrl()).toBe(`https://sv90073.hrz.uni-giessen.de/api/widgets/${WID}`);
+  });
+
+  it("lädt keine externen Ressourcen (kein Web-Font von einem Drittanbieter-Host)", async () => {
+    mockFetch([]);
+    withCurrentScript("https://www.uni-giessen.de/widget.js", runWidget);
+
+    await waitFor(() => expect($(".chatbot-widget-wrapper")).toBeTruthy());
+    const external = [...document.querySelectorAll("link, script, img")]
+      .map((el) => el.getAttribute("href") ?? el.getAttribute("src") ?? "")
+      .filter((u) => /^https?:\/\//.test(u));
+    expect(external).toEqual([]);
+  });
+});
+
 describe("widget.js — Antwort-Darstellung", () => {
   it("rendert die gestreamte KB-Antwort inklusive Quellen", async () => {
     mockFetch([

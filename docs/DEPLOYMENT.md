@@ -176,3 +176,103 @@ with that deployment's own domain:
 > widget. There's no console error to point at this — if an embedded widget
 > looks "generic" or out of date on one site but correct on another, check
 > `ALLOWED_ORIGINS` before anything else.
+
+### Embedding behind a reverse proxy on the portal (Plone)
+
+Loading the loader straight from `sv90073.hrz.uni-giessen.de` makes the portal
+serve a script from a foreign host, which trips the portal's security review. The
+fix on the portal side is a reverse proxy, so the loader is same-origin. **The
+proxy must forward the API too, under the same path prefix as the loader** —
+`widget.js` resolves every backend call *relative to its own `<script src>`*
+(`new URL('api', <dir of src>)`, see the `scriptBase` comment in
+`public/widget.js`), so loader and API always travel together:
+
+| `widget.js` served as | Widget calls |
+|---|---|
+| `https://portal/widget.js` | `https://portal/api/widgets/{id}` |
+| `https://portal/campusagents/widget.js` | `https://portal/campusagents/api/widgets/{id}` |
+
+Use a **dedicated prefix**, not the portal root. Mapping the loader to
+`https://portal/widget.js` sends the API calls to `https://portal/api/…`, which on
+`www.uni-giessen.de` is Plone's own namespace — it answers
+`404 {"error_type": "NotFound"}`, so the widget silently renders its hardcoded
+fallback config and every question fails with `⚠️ HTTP 404`.
+
+Name the prefix after **this deployment**, not after the widget type: it is a
+permanent public URL, and `/campusagents/` still fits once non-chat widgets ship.
+Avoid functional names (`/chatbot/`, `/embed/`, `/widgets/`) — they age badly, and
+a Plone editor could create content at that path, which a `^~` location then
+silently shadows. Nginx on the portal:
+
+```nginx
+# One prefix, forwarded to the CampusAgents deployment. Serves BOTH
+# /campusagents/widget.js and /campusagents/api/… — the loader needs both under
+# the same prefix. The trailing slash on proxy_pass strips the prefix.
+location ^~ /campusagents/ {
+    proxy_pass https://sv90073.hrz.uni-giessen.de/;
+
+    proxy_ssl_server_name on;                              # nginx defaults this OFF
+    proxy_ssl_name        sv90073.hrz.uni-giessen.de;
+
+    proxy_set_header Host              sv90073.hrz.uni-giessen.de;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    proxy_http_version 1.1;
+    proxy_read_timeout 300s;   # chat streaming (SSE)
+    proxy_buffering    off;    # stream tokens promptly, don't buffer the answer
+}
+```
+
+Three details in that block are load-bearing:
+
+- **`^~`**, not a bare prefix and not `=`. `^~` wins over regex locations, which a
+  Plone vhost normally has for static assets (`location ~* \.(js|css)$`) — without
+  it, `/campusagents/widget.js` gets served by Plone's static handler instead of
+  proxied. `=` is an exact match and can only ever forward one file, which is why
+  a loader-only `location = /widget.js` cannot be extended to cover the API.
+- **Trailing slash on both** `location …/` and `proxy_pass …de/`. That pair strips
+  the prefix upstream (`/campusagents/api/widgets/x` → `/api/widgets/x`). Naming a
+  file in `proxy_pass` (`…de/widget.js`) pins the block to that one file.
+- **`proxy_buffering off` + `proxy_read_timeout 300s`.** Irrelevant for a static
+  file, essential here: chat answers are an SSE stream, so buffering makes the
+  visitor watch the typing dots until the model finishes, and the default 60s read
+  timeout truncates long answers mid-stream.
+
+Verify after `nginx -t && nginx -s reload` — both must return 200, the second is
+the one a loader-only proxy gets wrong:
+
+```bash
+curl -si https://www.uni-giessen.de/campusagents/widget.js                    | head -1
+curl -si https://www.uni-giessen.de/campusagents/api/widgets/support-bot      | head -1
+```
+
+The embed snippet then carries no foreign host at all:
+
+```html
+<div class="chatbot-widget" data-widget-id="support-bot"></div>
+<script src="/campusagents/widget.js" defer></script>
+```
+
+`proxy_buffering off` and the raised `proxy_read_timeout` are not optional: chat
+answers are an SSE stream, and a buffering proxy holds the whole answer back until
+the model finishes (or times out at the default 60s on a long answer).
+
+Because everything is now same-origin from the browser's point of view, this
+layout needs **no `ALLOWED_ORIGINS` entry** for the portal and sends **no
+cross-origin preflight** — the CORS caveat above simply doesn't apply.
+
+**Fallback if the portal will only proxy the loader** and not the API: pin the API
+explicitly on the placeholder, which overrides the relative resolution.
+
+```html
+<div class="chatbot-widget" data-widget-id="support-bot"
+     data-api="https://sv90073.hrz.uni-giessen.de/api"></div>
+<script src="/widget.js" defer></script>
+```
+
+This reintroduces the cross-origin path, so the portal's origin must be in
+`ALLOWED_ORIGINS`. It keeps the script same-origin (which is what the security
+review was about) but the `fetch` calls still leave the domain — prefer the
+prefix proxy above.
