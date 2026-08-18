@@ -1,8 +1,8 @@
-# Cross-Platform User Access (chatbotadmin ↔ JustRAG) — Option A Summary
+# Cross-Platform User Access (CampusAgents ↔ JustRAG) — Option A Summary
 
 Two implementation plans have been written and are designed to be built and reviewed together:
 
-- **chatbotadmin** → [TOKEN_EXCHANGE_PLAN_CHATBOTADMIN.md](TOKEN_EXCHANGE_PLAN_CHATBOTADMIN.md)
+- **CampusAgents** → [TOKEN_EXCHANGE_PLAN_CAMPUSAGENTS.md](TOKEN_EXCHANGE_PLAN_CAMPUSAGENTS.md)
 - **JustRAG** → [../../JustRAG/docs/TOKEN_EXCHANGE_PLAN_JUSTRAG.md](../../JustRAG/docs/TOKEN_EXCHANGE_PLAN_JUSTRAG.md)
 
 ## The one finding that shapes everything
@@ -11,7 +11,7 @@ Option A is **not** "just config." **JustRAG only accepts its own HS256 JWT** �
 
 ## How the two plans split the work
 
-**chatbotadmin** (the harder lift — it creates the delegated identity):
+**CampusAgents** (the harder lift — it creates the delegated identity):
 
 1. Stop discarding Keycloak tokens at `OIDCCallback`; persist them encrypted in Redis (mandatory first step — today the server has nothing to exchange at agent-time).
 2. RFC 8693 exchange client → ask Keycloak for a `justrag`-audienced token.
@@ -25,7 +25,7 @@ Option A is **not** "just config." **JustRAG only accepts its own HS256 JWT** �
 
 ## Three decisions that are genuinely yours to make
 
-1. **Refresh-token lifetime vs. agent-flow timing** — if agents run hours/days after login, you need `offline_access` or a long SSO session, or exchanges fail. (chatbotadmin Phase 0.4)
+1. **Refresh-token lifetime vs. agent-flow timing** — if agents run hours/days after login, you need `offline_access` or a long SSO session, or exchanges fail. (CampusAgents Phase 0.4)
 2. **JustRAG provisioning policy** — should an exchange auto-create a JustRAG account for someone who never logged into JustRAG directly? Recommended: start **strict** (reject with 403). (JustRAG Phase 2.3)
 3. **A2 vs A1 on the JustRAG side** — recommended: A2.
 

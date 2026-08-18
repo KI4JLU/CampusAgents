@@ -457,7 +457,7 @@
     // Hide overlay immediately if a backend session token is already stored
     // (avoids a flash on reload). The token is validated by the backend on the
     // next /api call; logout clears it.
-    if (localStorage.getItem('chatbotadmin.token')) {
+    if (localStorage.getItem('campusagents.token')) {
       document.getElementById('auth-overlay').style.display = 'none';
     }
   </script>
@@ -565,8 +565,8 @@
     // the Admin UI uses. The request goes to the configured Widget Server Origin
     // (local dev: the Vite admin on :5173), which proxies /api to the backend.
     // No client-side password rules: the backend is the source of truth.
-    const TOKEN_KEY = 'chatbotadmin.token';
-    const USER_KEY = 'chatbotadmin.user';
+    const TOKEN_KEY = 'campusagents.token';
+    const USER_KEY = 'campusagents.user';
     const authOverlay = document.getElementById('auth-overlay');
     const authForm = document.getElementById('auth-form');
     const authUserInput = document.getElementById('auth-username');

@@ -35,7 +35,7 @@ interface AuthContextValue {
   logout: () => void;
 }
 
-const USER_STORAGE_KEY = "chatbotadmin.user";
+const USER_STORAGE_KEY = "campusagents.user";
 
 function readStoredUser(): AuthUser | null {
   try {
