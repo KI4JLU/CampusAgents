@@ -7,6 +7,7 @@ import {
   saveWidget,
 } from "./widgetsStore";
 import type { Widget } from "../types/widget";
+import type { components } from "../types/api.gen";
 
 // Der Store spricht das Backend ausschließlich über apiFetch an – hier gemockt,
 // damit die Tests kein echtes Netzwerk/Backend brauchen.
@@ -103,6 +104,80 @@ describe("fetchWidgets", () => {
   });
 });
 
+// Spec-minimal widget: exactly the fields of `required: [id, name, status, config]`
+// of schema `Widget` in openapi.yaml, nothing else.
+// Oracle: the type comes from src/types/api.gen.ts, which openapi-typescript
+// generates from the spec, not from the code under test. `tsc -b` (npm run build)
+// checks that this object is spec-valid; if the spec ever adds a required field,
+// the typecheck breaks here. The expected fallback values are taken from the
+// acceptance criteria of card KI-823, not from a run of the code.
+const SPEC_MINIMAL_WIDGET: components["schemas"]["Widget"] = {
+  id: "minimal-1",
+  name: "Nur Pflichtfelder",
+  status: "active",
+  config: {},
+};
+
+describe("fetchWidgets with spec-minimal / malformed widgets (KI-823)", () => {
+  it("back-fills every optional presentation field of a spec-minimal widget", async () => {
+    mockApiFetch.mockResolvedValueOnce(jsonResponse({ widgets: [SPEC_MINIMAL_WIDGET] }));
+
+    const [widget] = await fetchWidgets();
+    // Required fields pass through unchanged.
+    expect(widget.id).toBe("minimal-1");
+    expect(widget.name).toBe("Nur Pflichtfelder");
+    expect(widget.status).toBe("active");
+    // Optional fields get the fallbacks fixed in the card.
+    expect(widget.stats).toEqual({ conversations: 0, rating: 0 });
+    expect(widget.accent).toBe("primary");
+    expect(widget.icon).toBe("Bot");
+    expect(widget.routing).toBe("");
+    expect(widget.knowledgeBaseId).toBe("");
+    expect(widget.config.maxTokensPerAnswer).toBe(2000);
+  });
+
+  it("replaces malformed stats with 0, field by field", async () => {
+    const payload = [
+      { ...SPEC_MINIMAL_WIDGET, id: "null-stats", stats: null },
+      { ...SPEC_MINIMAL_WIDGET, id: "string-rating", stats: { conversations: 7, rating: "4.5" } },
+      { ...SPEC_MINIMAL_WIDGET, id: "nan", stats: { conversations: Number.NaN, rating: 3 } },
+    ];
+    mockApiFetch.mockResolvedValueOnce(jsonResponse({ widgets: payload }));
+
+    const widgets = await fetchWidgets();
+    expect(widgets.map((w) => w.stats)).toEqual([
+      { conversations: 0, rating: 0 },
+      { conversations: 7, rating: 0 },
+      { conversations: 0, rating: 3 },
+    ]);
+  });
+
+  it("maps an unknown accent to primary and an unknown status to paused", async () => {
+    const payload = [{ ...SPEC_MINIMAL_WIDGET, accent: "tertiary", status: "archived", icon: 42 }];
+    mockApiFetch.mockResolvedValueOnce(jsonResponse({ widgets: payload }));
+
+    const [widget] = await fetchWidgets();
+    expect(widget.accent).toBe("primary");
+    // The backend (chat.go) treats anything but "active" as unavailable.
+    expect(widget.status).toBe("paused");
+    expect(widget.icon).toBe("Bot");
+  });
+
+  it("keeps valid values untouched and preserves unknown fields", async () => {
+    const full = { ...makeWidget({ accent: "secondary", status: "paused", icon: "Globe" }), extra: "bleibt" };
+    full.stats = { conversations: 12, rating: 4.25 };
+    mockApiFetch.mockResolvedValueOnce(jsonResponse({ widgets: [full] }));
+
+    const [widget] = await fetchWidgets();
+    expect(widget.accent).toBe("secondary");
+    expect(widget.status).toBe("paused");
+    expect(widget.icon).toBe("Globe");
+    expect(widget.stats).toEqual({ conversations: 12, rating: 4.25 });
+    // The backend stores verbatim; saveWidget sends the whole object back.
+    expect((widget as Widget & { extra?: string }).extra).toBe("bleibt");
+  });
+});
+
 describe("saveWidget", () => {
   it("sendet PUT an /api/widgets/:id mit dem Widget als Body", async () => {
     const widget = makeWidget({ id: "new-1", name: "Neu" });
@@ -131,6 +206,14 @@ describe("saveWidget", () => {
 
     const result = await saveWidget(makeWidget({ id: "w1", name: "Clientwert" }));
     expect(result.name).toBe("Serverwert");
+  });
+
+  it("also normalizes the backend response (spec-minimal to complete)", async () => {
+    mockApiFetch.mockResolvedValueOnce(jsonResponse(SPEC_MINIMAL_WIDGET));
+
+    const result = await saveWidget(makeWidget({ id: "minimal-1" }));
+    expect(result.stats).toEqual({ conversations: 0, rating: 0 });
+    expect(result.accent).toBe("primary");
   });
 
   it("wirft mit der Backend-Fehlermeldung bei einer Fehlerantwort", async () => {
